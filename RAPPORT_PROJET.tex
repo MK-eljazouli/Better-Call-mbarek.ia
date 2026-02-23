@@ -1,0 +1,157 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{titlesec}
+
+% Configuration des marges
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% Configuration des liens hypertextes
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Rapport Technique - Al-Moustachar},
+    pdfpagemode=FullScreen,
+}
+
+% Configuration pour le code source
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{
+    \vspace{2cm}
+    \Huge \textbf{Al-Moustachar}\\
+    \large Chatbot Juridique Marocain avec RAG sur Azure\\
+    \vspace{1cm}
+    \includegraphics[width=0.4\textwidth]{logo_placeholder.png} % Remplacer par votre logo
+    \vspace{1cm}
+}
+\author{Équipe de Développement}
+\date{Février 2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+
+\section{Contexte du Projet}
+L'accès à l'information juridique au Maroc peut être complexe pour les citoyens non experts. Les textes de loi sont dispersés, le langage est technique, et la recherche manuelle est fastidieuse. Le projet \textbf{Al-Moustachar} vise à démocratiser cet accès en utilisant les dernières avancées en Intelligence Artificielle Générative.
+
+\section{Objectif Principal}
+Développer un assistant virtuel conversationnel capable de :
+\begin{enumerate}
+    \item Comprendre des questions juridiques posées en langage naturel (Arabe classique, Darija, Français).
+    \item Retrouver instantanément les textes de loi pertinents dans une base de données vectorielle.
+    \item Générer une réponse claire, précise et sourcée, basée exclusivement sur les textes officiels.
+\end{enumerate}
+
+\chapter{Architecture du Système}
+
+\section{Vue d'ensemble}
+L'application suit une architecture moderne de type \textbf{Microservices}, déployée sur le cloud \textbf{Microsoft Azure}. Elle repose sur le pattern \textbf{RAG (Retrieval-Augmented Generation)} pour garantir la fiabilité des réponses.
+
+\section{Composants Principaux}
+\begin{itemize}
+    \item \textbf{Frontend} : Application SPA développée avec React et Vite.
+    \item \textbf{Backend} : API REST performante développée avec FastAPI (Python).
+    \item \textbf{Vector Store} : Azure SQL Database avec support natif des vecteurs.
+    \item \textbf{LLM} : Azure OpenAI (GPT-4o-mini) pour la génération de réponses.
+\end{itemize}
+
+\chapter{Stack Technologique}
+
+\section{Technologie Web}
+\begin{itemize}
+    \item \textbf{Frontend} : React 18, TypeScript, Tailwind CSS.
+    \item \textbf{Backend} : Python 3.14, FastAPI, Uvicorn.
+\end{itemize}
+
+\section{Infrastructure Cloud (Azure)}
+\begin{itemize}
+    \item \textbf{Azure App Service (Linux)} : Hébergement de l'application web.
+    \item \textbf{Azure SQL Database} : Stockage des embeddings et textes de loi.
+    \item \textbf{Azure OpenAI} : Modèles d'IA (Embedding et Chat Completion).
+\end{itemize}
+
+\chapter{Détails d'Implémentation}
+
+\section{Moteur RAG}
+Le cœur du système repose sur la recherche vectorielle :
+\begin{enumerate}
+    \item La requête utilisateur est convertie en vecteur (embedding).
+    \item Une recherche de similarité cosinus est effectuée dans Azure SQL.
+    \item Les 5 articles de loi les plus pertinents sont récupérés.
+\end{enumerate}
+
+\section{Streaming Temps Réel (SSE)}
+Pour améliorer l'expérience utilisateur, nous avons implémenté le streaming via \textit{Server-Sent Events}. Cela permet d'afficher la réponse token par token, comme sur ChatGPT.
+
+\begin{lstlisting}[language=Python, caption=Exemple de générateur SSE]
+def answer_question_stream(query: str):
+    # 1. Recherche vectorielle
+    results = search_similar(get_embedding(query))
+    yield json.dumps({"type": "sources", "data": results}) + "\n"
+    
+    # 2. Génération de réponse
+    stream = client.chat.completions.create(model=..., stream=True)
+    for chunk in stream:
+        yield json.dumps({"type": "content", "data": chunk}) + "\n"
+\end{lstlisting}
+
+\chapter{Déploiement sur Azure}
+
+\section{Stratégie de Déploiement}
+Le projet a été déployé avec succès sur \textbf{Azure App Service Linux}.
+\begin{itemize}
+    \item **Plan** : F1 (Free Tier) pour le développement.
+    \item **Runtime** : Python 3.11.
+    \item **Serveur WSGI** : Gunicorn avec Uvicorn Workers.
+\end{itemize}
+
+\section{Configuration}
+Les variables d'environnement critiques ont été configurées via \texttt{App Settings} :
+\begin{verbatim}
+AZURE_OPENAI_API_KEY=...
+AZURE_SQL_CONNECTION_STRING=...
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+\end{verbatim}
+
+\chapter{Conclusion}
+Le projet Al-Moustachar démontre la faisabilité d'un assistant juridique fiable et performant utilisant les technologies Azure. L'intégration de la recherche vectorielle directement dans SQL Database simplifie l'architecture, tandis que le modèle RAG assure la précision juridique nécessaire.
+
+\end{document}

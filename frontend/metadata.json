@@ -1,0 +1,7 @@
+{
+  "name": "Better Call mbarek",
+  "description": "Guide IA du citoyen marocain pour les démarches administratives.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
